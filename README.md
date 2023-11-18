@@ -5,7 +5,7 @@ BAM project shows secure mobile app for password manager.
 ## Installation
 ```sh
 git clone https://github.com/patrykjawor/BAM_PRO.git
-cd bam_pro_demo
+cd bam_pro
 cd backend
 conda create --name <env> --file requirements.txt
 python manage.py migrate
