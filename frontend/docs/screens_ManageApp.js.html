@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: screens/ManageApp.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: screens/ManageApp.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file ManageApp.js - Komponent zarządzający aplikacją.
+ * Wykorzystuje React, useState, useEffect z 'react', StatusBar z 'expo-status-bar',
+ * View, Text, FlatList, StyleSheet, Pressable, Alert z 'react-native', Ionicons z '@expo/vector-icons',
+ * AsyncStorage, SecureStore z 'expo-secure-store', NewService i Service z odpowiednich komponentów.
+ * Odpowiada za zarządzanie usługami w aplikacji, wyświetlanie, dodawanie, usuwanie oraz edycję usług.
+ * 
+ * @requires React
+ * @requires useState
+ * @requires useEffect
+ * @requires StatusBar
+ * @requires View
+ * @requires Text
+ * @requires FlatList
+ * @requires StyleSheet
+ * @requires Pressable
+ * @requires Alert
+ * @requires Ionicons
+ * @requires AsyncStorage
+ * @requires SecureStore
+ * @requires NewService
+ * @requires Service
+ */
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { View, Text, FlatList, StyleSheet, Pressable, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import NewService from '../components/NewService';
+import Service from '../components/Service';
+import api from '../api';
+
+/**
+ * Komponent ManageApp
+ * @param {object} navigation - Obiekt nawigacji.
+ * @returns {JSX.Element} - Zwraca interfejs zarządzania aplikacją.
+ */
+export default function ManageApp({ navigation }) {
+  // Stany komponentu
+  const [services, setServices] = useState(null);
+  const [local, setLocal] = useState(null);
+
+  // Funkcja do wczytywania danych
+  const loadData = () => {
+    if (local === null) {
+      AsyncStorage.getItem('local')
+      .then(value => {
+        setLocal(value !== null ? true : false)
+      }).catch(e => {
+        console.error(e);
+        setLocal(false);
+      })
+    } else {
+      if (!local) {
+        api.get('/main/services/list/')
+          .then(response => {
+            return response.data
+          })
+          .then(data => {
+            setServices(data.services)
+          })
+          .catch(error => {
+            console.error(error)
+          })
+      } else {
+        SecureStore.getItemAsync('credits')
+          .then(value => {
+            setServices(value === null ? [] : JSON.parse(value))
+          })
+          .catch(error => {
+            console.error(error)
+          })
+      }
+    }
+  }
+
+  // Efekt wykonywany przy zmianie stanu lokalnego
+  useEffect(() => {
+    loadData()
+  }, [local])
+
+   // Funkcja obsługująca długie naciśnięcie na element
+  const handleLongPress = (item) => {
+    console.log('Long Pressed item:', item);
+    if (!local) {
+      api.post(`/main/services/delete/${item.pk}/`)
+        .then(response => {
+          return response.data
+        })
+        .then(data => {
+          Alert.alert(data.message);
+        })
+        .catch(error => {
+          console.warn(error);
+        })
+    } else {
+      console.log("Using local")
+      SecureStore.getItemAsync('credits')
+        .then(result => {
+          let items = JSON.parse(result);
+          SecureStore.setItemAsync('credits', JSON.stringify(items.filter((elem) => elem.pk !== item.pk)))
+            .then(() => { Alert.alert('Item deleted!') })
+            .catch(error => console.warn(error))
+        })
+        .catch(error => {
+          console.error(error);
+        })
+    }
+  };
+
+  // Funkcja obsługująca naciśnięcie na element
+  const handlePress = (item) => {
+    navigation.navigate('EditService', { serviceDetails: item, local: local });
+    console.log('Pressed item:', item);
+  };
+
+  // Renderowanie komponentu
+  return (
+    &lt;View style={style.container}>
+      &lt;StatusBar>This is a status bar&lt;/StatusBar>
+      &lt;Text style={style.title}>Your saved data&lt;/Text>
+      &lt;View style={style.list}>
+        &lt;FlatList
+          data={services}
+          renderItem={({ item }) => (
+            &lt;Pressable
+              delayLongPress={1000}
+              onPress={() => handlePress(item)}
+              onLongPress={() => handleLongPress(item)}>
+              &lt;Service details={item} key={item.pk} />
+            &lt;/Pressable>)} />
+      &lt;/View>
+      &lt;NewService />
+      &lt;Pressable style={style.reload} onPress={() => loadData()}>&lt;Ionicons name="reload" size={24} color="black" />&lt;Text> Refresh&lt;/Text>&lt;/Pressable>
+    &lt;/View>
+  );
+};
+
+
+// Style dla komponentu
+const style = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  list: {
+    width: '100%',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  reload: {
+    backgroundColor: '#BCDEFA',
+    flexDirection: 'row',
+    padding: 2,
+    paddingRight: 4,
+    borderRadius: 5,
+    marginTop: 5,
+  }
+})</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li></ul><h3>Global</h3><ul><li><a href="global.html#api">api</a></li><li><a href="global.html#authenticate2FA">authenticate2FA</a></li><li><a href="global.html#loginUser">loginUser</a></li><li><a href="global.html#registerUser">registerUser</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Nov 30 2023 12:08:00 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+    "source": {
+      "include": ["./frontend"],
+      "exclude": ["./frontend/node_modules"]
+    },
+    "opts": {
+      "recurse": true,
+      "destination": "./frontend/docs"
+    }
+  }
+  

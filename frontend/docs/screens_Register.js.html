@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: screens/Register.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: screens/Register.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file Register.js - Komponent obsługujący rejestrację użytkownika.
+ * Wykorzystuje React, useState z 'react', Modal, Text, TouchableOpacity, TextInput, Button, Alert, StyleSheet, View z 'react-native',
+ * Clipboard z 'expo-clipboard', registerUser z '../api'.
+ * Odpowiada za interfejs rejestracji użytkownika, przetwarzanie danych rejestracji, wyświetlanie komunikatów, wyświetlanie i kopiowanie tajnego klucza.
+ * 
+ * @requires React
+ * @requires useState
+ * @requires Modal
+ * @requires Text
+ * @requires TouchableOpacity
+ * @requires TextInput
+ * @requires Button
+ * @requires Alert
+ * @requires StyleSheet
+ * @requires View
+ * @requires Clipboard
+ * @requires registerUser
+ */
+import { useState } from 'react';
+import { registerUser } from '../api';
+import { Modal, Text, TouchableOpacity, TextInput, Button, Alert, StyleSheet, View } from 'react-native';
+import * as Clipboard from "expo-clipboard"
+
+/**
+ * Komponent Register
+ * @param {object} navigation - Obiekt nawigacji.
+ * @returns {JSX.Element} - Zwraca interfejs rejestracji użytkownika.
+ */
+export default function Register({ navigation }) {
+  // Stany przechowujące dane rejestracji
+  const [username, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password1, setPassword1] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [secretKey, setSecretKey] = useState('');
+
+  // Tworzenie obiektu FormData z danymi rejestracji
+  const formDataRegister = new FormData();
+  formDataRegister.append('username', username);
+  formDataRegister.append('email', email);
+  formDataRegister.append('password1', password1);
+  formDataRegister.append('password2', password2);
+
+  // Obsługa rejestracji użytkownika
+  const handleRegister = async () => {
+    const response = await registerUser(formDataRegister);
+    if (response) {
+      if (response.status === 200) {
+        if (response.secret) {
+          setModalVisible(true);
+          setSecretKey(response.secret);
+        }
+      } else if (response.status === 400) {
+        Alert.alert('Passwords dont match!', response.error);
+      } else if (response.status === 401) {
+        Alert.alert("Username exists", response.error);
+      }
+    } else {
+      Alert.alert('Registration failed', 'Unexpected response from the server');
+    }
+  };
+
+  // Kopiowanie tajnego klucza do schowka
+  const copyToClipboard = async () => {
+    await Clipboard.setStringAsync(secretKey);
+    Alert.alert('Secret key copied to clipboard');
+  };
+
+  // Renderowanie interfejsu
+  return (
+    &lt;View style={styles.container}>
+      &lt;TextInput
+        placeholder="username"
+        value={username}
+        onChangeText={(text) => setUserName(text)}
+        style={styles.input}
+      />
+
+      &lt;TextInput
+        placeholder="email"
+        value={email}
+        onChangeText={(text) => setEmail(text)}
+        style={styles.input}
+      />
+
+      &lt;TextInput
+        secureTextEntry={true}
+        placeholder="password"
+        value={password1}
+        onChangeText={(text) => setPassword1(text)}
+        style={styles.input}
+      />
+
+      &lt;TextInput
+        secureTextEntry={true}
+        placeholder="repeat password"
+        value={password2}
+        onChangeText={(text) => setPassword2(text)}
+        style={styles.input}
+      />
+
+      &lt;Button title="Register" 
+      onPress={handleRegister} 
+      style={styles.submit}/>
+
+      &lt;Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => {
+          setModalVisible(false);
+        }}
+      >
+        &lt;View style={styles.centeredView}>
+          &lt;View style={styles.modalView}>
+            &lt;Text>Your Secret Code for login is:&lt;/Text>
+            &lt;Text>{secretKey}&lt;/Text>
+            &lt;TouchableOpacity
+              onPress={copyToClipboard}
+              style={styles.copyButton}
+            >
+              &lt;Text>Copy to Clipboard&lt;/Text>
+            &lt;/TouchableOpacity>
+            &lt;Button
+              title="Close"
+              onPress={() => setModalVisible(false)}
+            />
+          &lt;/View>
+        &lt;/View>
+      &lt;/Modal>
+    &lt;/View>
+
+
+  );
+};
+
+// Style dla komponentu
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  form: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  input: {
+    backgroundColor: '#BCDEFA',
+    shadowColor: 'black',
+    paddingLeft: 4,
+    shadowOffset: { width: -2, height: 4 },
+    shadowRadius: 5,
+    borderRadius: 4,
+    elevation: 5,
+    width: '75%',
+    minHeight: 40,
+    marginBottom: 15,
+    textAlign:'center'
+  },
+  submit: {
+    width: '75%',
+    minHeight: 40,
+    backgroundColor: '#519FE0',
+    borderRadius: 5,
+    justifyContent: 'center'
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  copyButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 5,
+    padding: 10,
+    margin: 10,
+  },
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li></ul><h3>Global</h3><ul><li><a href="global.html#api">api</a></li><li><a href="global.html#authenticate2FA">authenticate2FA</a></li><li><a href="global.html#loginUser">loginUser</a></li><li><a href="global.html#registerUser">registerUser</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Thu Nov 30 2023 12:08:00 GMT+0100 (czas środkowoeuropejski standardowy)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

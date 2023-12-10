@@ -29,13 +29,12 @@ SECRET_KEY = 'django-insecure-emp8g=$&%83^zjr1#4uip$ujoh0j3kv)&khfj$_*1cc#0^wht@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
 INSTALLED_APPS = [
     'mainApp',
+    "sslserver",
     'django_otp',
     'corsheaders',
     'django_cryptography',
@@ -48,7 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    #'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -133,7 +132,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
 "http://localhost:8000",
-"exp://127.0.0.1:8081"
+"exp://127.0.0.1:8081",
+"exp://192.168.0.145:8081"
 ]
 
 ALLOWED_HOSTS = [*env('HOST').split(',')]
